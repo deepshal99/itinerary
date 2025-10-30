@@ -1,0 +1,96 @@
+# Conversational flow definition for Itinerary Builder
+steps:
+  - id: landing
+    intent: invite
+    prompt: "let's plan your next escape."
+    cta: "start chatting"
+    next: destination
+  - id: destination
+    intent: capture_destination
+    prompt: "where are you headed?"
+    input: text-field
+    assist:
+      globe: true
+      suggestions: 6
+    next: companions
+  - id: companions
+    intent: choose_companions
+    prompt: "who’s coming along?"
+    input: chip-select
+    options: ["solo", "partner", "friends", "family", "team"]
+    next: duration
+  - id: duration
+    intent: set_length
+    prompt: "how long’s your adventure?"
+    input: number-picker
+    default: 5
+    next: dates
+  - id: dates
+    intent: select_dates
+    prompt: "when are you heading out?"
+    input: calendar-range
+    next: vibe
+  - id: vibe
+    intent: define_vibe
+    prompt: "what mood are you chasing?"
+    input: card-multi-select
+    options: ["adventure", "slow mornings", "foodie", "culture dive", "wellness"]
+    next: suggestion_opt_in
+  - id: suggestion_opt_in
+    intent: toggle_ai
+    prompt: "want me to suggest some must-visits?"
+    primary_action: "yes please"
+    secondary_action: "i’ll add my own"
+    next_if_primary: discovery
+    next_if_secondary: manual_discovery
+  - id: discovery
+    intent: browse_suggestions
+    layout: split
+    regions:
+      left: [map, suggestion_carousel]
+      right: [trip_stack]
+    transitions:
+      add_spot: confetti
+      open_map: zoom_in
+    next: organize_prompt
+  - id: manual_discovery
+    intent: add_custom_spots
+    layout: map_first
+    regions:
+      top: [search_chip]
+      body: [map]
+      dock: [trip_stack]
+    next: organize_prompt
+  - id: organize_prompt
+    intent: offer_ai_grouping
+    prompt: "would you like me to organize your trip by day?"
+    primary_action: "yes, please tidy it"
+    secondary_action: "i’ll do it"
+    next_if_primary: timeline_auto
+    next_if_secondary: timeline_manual
+  - id: timeline_auto
+    intent: review_ai_plan
+    layout: vertical_timeline
+    features: [drag_drop, ai_chip]
+    next: map_view
+  - id: timeline_manual
+    intent: build_plan
+    layout: vertical_timeline
+    features: [drag_drop]
+    next: map_view
+  - id: map_view
+    intent: visualize_route
+    layout: full_map
+    overlays: [day_filter, mini_itinerary]
+    next: save
+  - id: save
+    intent: finalize
+    prompt: "ready to save this?"
+    primary_action: "looks good"
+    secondary_action: "keep tweaking"
+    success_animation: confetti
+    next: memory_mode
+  - id: memory_mode
+    intent: relive
+    layout: horizontal_timeline
+    features: [stats_banner, playback_button]
